@@ -24,23 +24,20 @@ hs_err_pid*
 
 # IntelliJ IDEA Gradle Files
 .gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/libraries
+.idea
 .DS_Store
-/build
-/captures
-/.idea
+build
+captures
 *.iml
 *.apk
 *.ap_
 *.dex
 bin/
 gen/
-/*/build/
+*/build/
 proguard/
 **/out/
-/classes/
+classes/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
@@ -64,6 +61,3 @@ docs/virtualenv/
 *.swn
 *.swo
 
-# Files you may find useful to have in your working directory.
-.idea
-.ideaDataSources
