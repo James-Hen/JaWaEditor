@@ -1,5 +1,17 @@
+import com.formdev.flatlaf.FlatLightLaf;
+
+import javax.swing.*;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello World");
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch(Exception ex) {
+            System.err.println("Failed to initialize LaF");
+        }
+
+        EditorFrame frame = new EditorFrame();
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 }
