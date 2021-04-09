@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Editor.iml" filepath="$PROJECT_DIR$/.idea/modules/Editor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/JaWaEditor.iml" filepath="$PROJECT_DIR$/.idea/modules/JaWaEditor.iml" />
     </modules>
   </component>
 </project>
