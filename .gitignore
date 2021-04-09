@@ -21,3 +21,49 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# IntelliJ IDEA Gradle Files
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+/.idea
+*.iml
+*.apk
+*.ap_
+*.dex
+bin/
+gen/
+/*/build/
+proguard/
+**/out/
+/classes/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+
+# docs related
+docs/virtualenv/
+
+# bft-smart
+**/config/currentView
+
+# vim
+*.swp
+*.swn
+*.swo
+
+# Files you may find useful to have in your working directory.
+.idea
+.ideaDataSources
