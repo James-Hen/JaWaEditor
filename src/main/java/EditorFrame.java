@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.text.Document;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
@@ -49,12 +50,14 @@ public class EditorFrame extends JFrame implements ActionListener {
         BorderLayout layout = new BorderLayout();
         this.setLayout(layout);
 
+        HTMLEditorKit textKit = new HTMLEditorKit();
+        Document defaultDocument = textKit.createDefaultDocument();
         textArea = new JTextPane();
-        textArea.setEditorKit(new HTMLEditorKit());
+        textArea.setEditorKit(textKit);
+        textArea.setDocument(defaultDocument);
         this.add(textArea, BorderLayout.CENTER);
 
         textArea.setContentType("text/html");
-        textArea.setText("<p>Hi!</p>");
 
         JPanel toolPanel = new JPanel();
         this.add(toolPanel, BorderLayout.NORTH);
@@ -62,10 +65,15 @@ public class EditorFrame extends JFrame implements ActionListener {
                 new TextStyleOptionCheckbox("Bold", false, new StyledEditorKit.BoldAction());
         TextStyleOptionCheckbox italicCheckBox =
                 new TextStyleOptionCheckbox("Italic", false, new StyledEditorKit.ItalicAction());
+        JComboBox<Color> textColorCombo = new JComboBox<Color>();
+        textColorCombo.addItem(Color.RED);
+        textColorCombo.addItem(Color.GREEN);
+        textColorCombo.addItem(Color.BLUE);
         TextStyleOptionCheckbox redCheckBox =
                 new TextStyleOptionCheckbox("Red", false, new StyledEditorKit.ForegroundAction("red", Color.RED));
         toolPanel.add(boldCheckBox);
         toolPanel.add(italicCheckBox);
+        toolPanel.add(textColorCombo);
         toolPanel.add(redCheckBox);
     }
 
