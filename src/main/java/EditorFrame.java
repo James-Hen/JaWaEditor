@@ -10,12 +10,13 @@ public class EditorFrame extends JFrame implements ActionListener {
     private JMenuBar menuBar;
 
     private JMenu fileMenu;
-    JMenuItem newFileMenu, openFileMenu, saveFileMenu, saveAsFileMenu;
+    private JMenuItem newFileMenu, openFileMenu, saveFileMenu, saveAsFileMenu;
 
     private JMenu helpMenu;
-    JMenuItem aboutMenu;
+    private JMenuItem debugMenu, aboutMenu;
 
     private JTextPane textArea;
+    private DebugFrame debugFrame;
 
     EditorFrame() {
         this.setSize(800, 600);
@@ -37,8 +38,11 @@ public class EditorFrame extends JFrame implements ActionListener {
         fileMenu.add(saveAsFileMenu);
 
         helpMenu = new JMenu("Help");
+        debugMenu = new JMenuItem("Debug");
+        debugMenu.addActionListener(this);
         aboutMenu = new JMenuItem("About");
         aboutMenu.addActionListener(this);
+        helpMenu.add(debugMenu);
         helpMenu.add(aboutMenu);
 
         menuBar = new JMenuBar();
@@ -75,6 +79,10 @@ public class EditorFrame extends JFrame implements ActionListener {
         toolPanel.add(italicCheckBox);
         toolPanel.add(textColorCombo);
         toolPanel.add(redCheckBox);
+
+        // Setup debug frame
+        debugFrame = new DebugFrame(textArea);
+        defaultDocument.addDocumentListener(debugFrame);
     }
 
     @Override
@@ -91,6 +99,10 @@ public class EditorFrame extends JFrame implements ActionListener {
         }
         else if (e.getSource() == newFileMenu) {
             JOptionPane.showMessageDialog(null, "TODO");
+        }
+        // "Debug Menu" options
+        else if (e.getSource() == debugMenu) {
+            debugFrame.setVisible(true);
         }
         // "Help Menu" options
         else if (e.getSource() == aboutMenu) {
