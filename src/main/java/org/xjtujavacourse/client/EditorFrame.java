@@ -1,3 +1,5 @@
+package org.xjtujavacourse.client;
+
 import javax.swing.*;
 import javax.swing.text.Document;
 import javax.swing.text.StyledEditorKit;
