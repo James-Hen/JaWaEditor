@@ -8,6 +8,9 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 
 public class ServerMain {
+    // HashMap<String, Document>
+    // [name] -> newest doc
+    // [hash] -> doc
     private static void sendResponse(HttpExchange exchange, String resp) throws IOException {
         byte[] respContents = resp.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=UTF-8");

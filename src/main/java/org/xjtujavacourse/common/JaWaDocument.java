@@ -1,6 +1,6 @@
 package org.xjtujavacourse.common;
 
-public class Document {
+public class JaWaDocument {
     String name;
     String content;
     String prevVersion;
