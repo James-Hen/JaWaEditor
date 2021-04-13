@@ -61,7 +61,8 @@ public class EditorFrame extends JFrame implements ActionListener {
         textArea = new JTextPane();
         textArea.setEditorKit(textKit);
         textArea.setDocument(defaultDocument);
-        this.add(textArea, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(textArea);
+        this.add(scroll, BorderLayout.CENTER);
 
         textArea.setContentType("text/html");
 
@@ -108,7 +109,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         }
         // "Help Menu" options
         else if (e.getSource() == aboutMenu) {
-            JOptionPane.showMessageDialog(null, "JaWa Editor v1.0");
+            JOptionPane.showMessageDialog(this, "JaWa Editor v1.0");
         }
     }
 }

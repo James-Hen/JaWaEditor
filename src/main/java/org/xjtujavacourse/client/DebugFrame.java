@@ -16,7 +16,8 @@ public class DebugFrame extends JFrame implements DocumentListener {
         this.setSize(800, 600);
         this.setTitle("Debug");
         text = new JTextArea();
-        this.add(text);
+        JScrollPane scroll = new JScrollPane(text);
+        this.add(scroll);
         this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
     }
 
