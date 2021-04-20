@@ -68,20 +68,21 @@ public class EditorFrame extends JFrame implements ActionListener {
 
         JPanel toolPanel = new JPanel();
         this.add(toolPanel, BorderLayout.NORTH);
-        TextStyleOptionCheckbox boldCheckBox =
-                new TextStyleOptionCheckbox("Bold", false, new StyledEditorKit.BoldAction());
-        TextStyleOptionCheckbox italicCheckBox =
-                new TextStyleOptionCheckbox("Italic", false, new StyledEditorKit.ItalicAction());
-        JComboBox<Color> textColorCombo = new JComboBox<Color>();
-        textColorCombo.addItem(Color.RED);
-        textColorCombo.addItem(Color.GREEN);
-        textColorCombo.addItem(Color.BLUE);
-        TextStyleOptionCheckbox redCheckBox =
-                new TextStyleOptionCheckbox("Red", false, new StyledEditorKit.ForegroundAction("red", Color.RED));
+        TextStyleCheckbox boldCheckBox =
+                new TextStyleCheckbox("Bold", false, new StyledEditorKit.BoldAction());
+        TextStyleCheckbox italicCheckBox =
+                new TextStyleCheckbox("Italic", false, new StyledEditorKit.ItalicAction());
+        ColorComboBox textColorCombo = new ColorComboBox(
+                new Action[] {
+                        new StyledEditorKit.ForegroundAction("Black", Color.BLACK),
+                        new StyledEditorKit.ForegroundAction("Red", Color.RED),
+                        new StyledEditorKit.ForegroundAction("Green", Color.GREEN),
+                        new StyledEditorKit.ForegroundAction("Blue", Color.BLUE)
+                }
+        );
         toolPanel.add(boldCheckBox);
         toolPanel.add(italicCheckBox);
         toolPanel.add(textColorCombo);
-        toolPanel.add(redCheckBox);
 
         // Setup debug frame
         debugFrame = new DebugFrame(textArea);

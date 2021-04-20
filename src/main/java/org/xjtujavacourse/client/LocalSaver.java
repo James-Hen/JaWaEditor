@@ -3,7 +3,7 @@ package org.xjtujavacourse.client;
 import org.xjtujavacourse.common.JaWaDocument;
 
 public class LocalSaver extends Saver {
-    // path æ˜¯ç›®å½•å‰ç¼€ï¼Œæ–‡ä»¶ååœ¨ doc å‚æ•°ä¸­æŒ‡å®š
+    // path ÊÇÄ¿Â¼Ç°×º£¬ÎÄ¼şÃûÔÚ doc ²ÎÊıÖĞÖ¸¶¨
     public LocalSaver(String path) {
         super(path);
     }
