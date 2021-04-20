@@ -1,12 +1,14 @@
 package org.xjtujavacourse.client;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.Document;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 public class EditorFrame extends JFrame implements ActionListener {
     private JMenuBar menuBar;
@@ -20,20 +22,23 @@ public class EditorFrame extends JFrame implements ActionListener {
     private JTextPane textArea;
     private DebugFrame debugFrame;
 
+    private File documentFile;
+
     EditorFrame() {
         this.setSize(800, 600);
         this.setTitle("JaWa Editor");
 
         // Setup menu
         fileMenu = new JMenu("File");
+        FileMenuListener fileMenuListener = new FileMenuListener();
         newFileMenu = new JMenuItem("New");
-        newFileMenu.addActionListener(this);
+        newFileMenu.addActionListener(fileMenuListener);
         openFileMenu = new JMenuItem("Open");
-        openFileMenu.addActionListener(this);
+        openFileMenu.addActionListener(fileMenuListener);
         saveFileMenu = new JMenuItem("Save");
-        saveFileMenu.addActionListener(this);
+        saveFileMenu.addActionListener(fileMenuListener);
         saveAsFileMenu = new JMenuItem("Save as");
-        saveAsFileMenu.addActionListener(this);
+        saveAsFileMenu.addActionListener(fileMenuListener);
         fileMenu.add(newFileMenu);
         fileMenu.add(openFileMenu);
         fileMenu.add(saveFileMenu);
@@ -89,23 +94,44 @@ public class EditorFrame extends JFrame implements ActionListener {
         defaultDocument.addDocumentListener(debugFrame);
     }
 
+    private class FileMenuListener implements ActionListener {
+        JFileChooser fileChooser;
+        FileSystemView fsv;
+        FileMenuListener() {
+            fileChooser = new JFileChooser();
+            fsv = FileSystemView.getFileSystemView();
+            fileChooser.setCurrentDirectory(fsv.getHomeDirectory());
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int result = fileChooser.showOpenDialog(EditorFrame.this);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                documentFile = fileChooser.getSelectedFile();
+                System.err.println("path: " + documentFile);
+            }
+            else {
+                return;
+            }
+            // "File Menu" options
+            if (e.getSource() == newFileMenu) {
+
+            }
+            else if (e.getSource() == openFileMenu) {
+
+            }
+            else if (e.getSource() == saveFileMenu) {
+
+            }
+            else if (e.getSource() == saveAsFileMenu) {
+
+            }
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        // "File Menu" options
-        if (e.getSource() == newFileMenu) {
-            JOptionPane.showMessageDialog(null, "TODO");
-        }
-        else if (e.getSource() == newFileMenu) {
-            JOptionPane.showMessageDialog(null, "TODO");
-        }
-        else if (e.getSource() == newFileMenu) {
-            JOptionPane.showMessageDialog(null, "TODO");
-        }
-        else if (e.getSource() == newFileMenu) {
-            JOptionPane.showMessageDialog(null, "TODO");
-        }
         // "Debug Menu" options
-        else if (e.getSource() == debugMenu) {
+        if (e.getSource() == debugMenu) {
             debugFrame.setVisible(true);
         }
         // "Help Menu" options
