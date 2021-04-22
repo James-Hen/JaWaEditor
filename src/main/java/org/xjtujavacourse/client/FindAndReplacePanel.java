@@ -33,7 +33,7 @@ public class FindAndReplacePanel extends JPanel {
         JPanel optionButtonsPanel = new JPanel();
 
         if (thisFunctionType == FIND) {
-            findNextButton = new JButton("Find");
+            findNextButton = new JButton("Find Next");
             findNextButton.addActionListener(parentListener);
             optionButtonsPanel.add(findNextButton);
         }

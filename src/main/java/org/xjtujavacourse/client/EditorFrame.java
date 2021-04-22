@@ -1,11 +1,10 @@
 package org.xjtujavacourse.client;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileSystemView;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.Document;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledEditorKit;
+import javax.swing.text.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
@@ -14,7 +13,7 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-public class EditorFrame extends JFrame implements ActionListener, MouseListener {
+public class EditorFrame extends JFrame implements ActionListener, MouseListener, DocumentListener {
     // Menu and menu options
     private JMenuBar menuBar;
 
@@ -74,10 +73,13 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         editMenu = new JMenu("Edit");
         findMenu = new JMenuItem("Find");
         findMenu.addActionListener(this);
+        findMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK));
         findAndReplaceMenu = new JMenuItem("Replace");
         findAndReplaceMenu.addActionListener(this);
+        findAndReplaceMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK));
         editMenu.add(findMenu);
         editMenu.add(findAndReplaceMenu);
+        isLocationsValid = false;
 
         menuBar = new JMenuBar();
         menuBar.add(fileMenu);
@@ -92,6 +94,7 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
 
         textKit = new HTMLEditorKit();
         nowDocument = textKit.createDefaultDocument();
+        nowDocument.addDocumentListener(this); // for updating find and replace
         textArea = new JTextPane();
         textArea.setEditorKit(textKit);
         textArea.addMouseListener(this);
@@ -167,6 +170,25 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         refreshStyleToolStatus();
     }
 
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        isLocationsValid = false;
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        isLocationsValid = false;
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        isLocationsValid = false;
+    }
+
+    private void documentFindingUpdated() {
+        findInText(findAndReplaceFrame.findField.getText());
+    }
+
     private class FileMenuListener implements ActionListener {
         JFileChooser fileChooser;
         FileSystemView fsv;
@@ -180,7 +202,6 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
             int result = fileChooser.showOpenDialog(EditorFrame.this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 documentFile = fileChooser.getSelectedFile();
-                System.err.println("path: " + documentFile);
             }
             else {
                 return;
@@ -201,31 +222,63 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         }
     }
 
-    private ArrayList<ArrayList<Integer>> findInText(String pattern) {
-        ArrayList result = new ArrayList();
+    boolean isLocationsValid;
+    private ArrayList<ArrayList<Integer>> foundTextLocations;
+    int nowIndicateFoundTextArrayIndex, nowReplacedIncrement;
+
+    private synchronized void findInText(String pattern) {
+        int startOffset = nowDocument.getDefaultRootElement().getStartOffset();
+        int length = nowDocument.getDefaultRootElement().getEndOffset() - startOffset;
+        String text = "";
+        try {
+            text = nowDocument.getText(startOffset, length);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        foundTextLocations = new ArrayList<ArrayList<Integer>>();
+        nowIndicateFoundTextArrayIndex = 0;
+        nowReplacedIncrement = 0;
         int indFound = 0;
-        while ((indFound = textArea.getText().indexOf(pattern, indFound)) != -1) {
+        while ((indFound = text.indexOf(pattern, indFound)) != -1) {
             ArrayList<Integer> a = new ArrayList<Integer>();
-            a.add(indFound);
-            a.add(pattern.length());
-            result.add(a);
+            a.add(indFound + startOffset);
+            a.add(indFound + startOffset + pattern.length());
+            foundTextLocations.add(a);
             indFound += pattern.length();
         }
-        return result;
+        isLocationsValid = true;
     }
 
-    private void showFoundText(String pattern) {
-        ArrayList foundStrings = findInText(pattern);
-        for (ArrayList<Integer> found : findInText(pattern)) {
-            System.err.println(found);
-            textArea.setSelectionStart(found.get(0));
-            textArea.setSelectionEnd(found.get(1));
-            textArea.setSelectedTextColor(Color.MAGENTA);
+    private void showNextFoundText() {
+        showFoundText();
+        nowIndicateFoundTextArrayIndex += 1;
+        if (nowIndicateFoundTextArrayIndex == foundTextLocations.size()) {
+            nowIndicateFoundTextArrayIndex = 0;
         }
     }
 
-    private void replaceFoundText() {
+    private void showFoundText() {
+        ArrayList<Integer> found = foundTextLocations.get(nowIndicateFoundTextArrayIndex);
+        textArea.requestFocusInWindow();
+        textArea.select(found.get(0) + nowReplacedIncrement, found.get(1) + nowReplacedIncrement);
+    }
 
+    private boolean replaceNextFoundText() {
+        if (foundTextLocations.isEmpty()) {
+            return false;
+        }
+        ArrayList<Integer> found = foundTextLocations.get(nowIndicateFoundTextArrayIndex);
+        textArea.requestFocusInWindow();
+        textArea.select(found.get(0) + nowReplacedIncrement, found.get(1) + nowReplacedIncrement);
+        String altText = findAndReplaceFrame.replaceField.getText();
+        textArea.replaceSelection(altText);
+        textArea.select(found.get(0) + nowReplacedIncrement, found.get(0) + altText.length() + nowReplacedIncrement);
+        nowReplacedIncrement += altText.length() - findAndReplaceFrame.findField.getText().length();
+        nowIndicateFoundTextArrayIndex += 1;
+        if (nowIndicateFoundTextArrayIndex == foundTextLocations.size()) {
+            nowIndicateFoundTextArrayIndex = 0;
+        }
+        return true;
     }
 
     @Override
@@ -236,34 +289,44 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         }
         // "Edit Menu" options
         else if (e.getSource() == findMenu) {
+            if (findAndReplaceFrame != null) {
+                findAndReplaceFrame.setVisible(false);
+                findAndReplaceFrame = null;
+            }
             findAndReplaceFrame = new FindAndReplacePanel(FindAndReplacePanel.FIND, this);
+            findAndReplaceFrame.findField.getDocument().addDocumentListener(this);
             this.add(findAndReplaceFrame, BorderLayout.SOUTH);
-            textArea.setEditable(false);
             this.revalidate();
         }
         else if (e.getSource() == findAndReplaceMenu) {
+            if (findAndReplaceFrame != null) {
+                findAndReplaceFrame.setVisible(false);
+                findAndReplaceFrame = null;
+            }
             findAndReplaceFrame = new FindAndReplacePanel(FindAndReplacePanel.REPLACE, this);
+            findAndReplaceFrame.findField.getDocument().addDocumentListener(this);
             this.add(findAndReplaceFrame, BorderLayout.SOUTH);
-            textArea.setEditable(false);
             this.revalidate();
         }
         // "Find and Replace Panel" options
         else if (e.getSource() == findAndReplaceFrame.exitButton) {
             this.remove(findAndReplaceFrame);
-            textArea.setEditable(true);
             this.revalidate();
         }
         else if (e.getSource() == findAndReplaceFrame.findNextButton) {
-
+            if (!isLocationsValid) {
+                documentFindingUpdated();
+            }
+            showNextFoundText();
         }
         else if (e.getSource() == findAndReplaceFrame.replaceNextButton) {
-
+            if (!isLocationsValid) {
+                documentFindingUpdated();
+            }
+            replaceNextFoundText();
         }
         else if (e.getSource() == findAndReplaceFrame.replaceAllButton) {
-
-        }
-        else if (e.getSource() == findAndReplaceFrame.findField) {
-            showFoundText(findAndReplaceFrame.findField.getText());
+            while (replaceNextFoundText());
         }
         // "Help Menu" options
         else if (e.getSource() == aboutMenu) {
