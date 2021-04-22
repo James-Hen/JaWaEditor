@@ -6,11 +6,13 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.Document;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledEditorKit;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.Enumeration;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 public class EditorFrame extends JFrame implements ActionListener, MouseListener {
     // Menu and menu options
@@ -24,6 +26,11 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
 
     private JMenu editMenu;
     private JMenuItem findMenu, findAndReplaceMenu;
+
+    // Find and replace utils
+    private FindAndReplacePanel findAndReplaceFrame;
+    private Document documentBackup;
+    private Document nowDocument;
 
     // Editor container and style tools
     private JTextPane textArea;
@@ -84,11 +91,11 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         this.setLayout(layout);
 
         textKit = new HTMLEditorKit();
-        Document defaultDocument = textKit.createDefaultDocument();
+        nowDocument = textKit.createDefaultDocument();
         textArea = new JTextPane();
         textArea.setEditorKit(textKit);
         textArea.addMouseListener(this);
-        textArea.setDocument(defaultDocument);
+        textArea.setDocument(nowDocument);
         JScrollPane scroll = new JScrollPane(textArea);
         this.add(scroll, BorderLayout.CENTER);
 
@@ -123,7 +130,7 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
 
         // Setup debug frame
         debugFrame = new DebugFrame(textArea);
-        defaultDocument.addDocumentListener(debugFrame);
+        nowDocument.addDocumentListener(debugFrame);
     }
 
     private void refreshStyleToolStatus() {
@@ -194,18 +201,67 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         }
     }
 
+    private ArrayList<ArrayList<Integer>> findInText(String pattern) {
+        ArrayList result = new ArrayList();
+        int indFound = 0;
+        while ((indFound = textArea.getText().indexOf(pattern, indFound)) != -1) {
+            System.err.println(indFound);
+            result.add(new int[]{indFound, pattern.length()});
+            indFound += pattern.length();
+        }
+        return result;
+    }
+
+    private void showFoundText(String pattern) {
+        ArrayList foundStrings = findInText(pattern);
+        documentBackup = nowDocument;// TODO: fuck up deep copy
+        for (ArrayList<Integer> found : findInText(pattern)) {
+            textArea.setSelectionStart(found.get(0));
+            textArea.setSelectionEnd(found.get(1));
+            textArea.setSelectedTextColor(Color.MAGENTA);
+        }
+    }
+
+    private void replaceFoundText() {
+
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         // "Debug Menu" options
         if (e.getSource() == debugMenu) {
             debugFrame.setVisible(true);
         }
+        // "Edit Menu" options
         else if (e.getSource() == findMenu) {
-            FindAndReplaceFrame findFrame = new FindAndReplaceFrame();
-            findFrame.setVisible(true);
+            findAndReplaceFrame = new FindAndReplacePanel(FindAndReplacePanel.FIND, this);
+            this.add(findAndReplaceFrame, BorderLayout.SOUTH);
+            textArea.setEditable(false);
+            this.revalidate();
         }
         else if (e.getSource() == findAndReplaceMenu) {
-            FindAndReplaceFrame findAndReplaceFrame = new FindAndReplaceFrame();
+            findAndReplaceFrame = new FindAndReplacePanel(FindAndReplacePanel.REPLACE, this);
+            this.add(findAndReplaceFrame, BorderLayout.SOUTH);
+            textArea.setEditable(false);
+            this.revalidate();
+        }
+        // "Find and Replace Panel" options
+        else if (e.getSource() == findAndReplaceFrame.exitButton) {
+            this.remove(findAndReplaceFrame);
+            textArea.setEditable(true);
+            this.revalidate();
+        }
+        else if (e.getSource() == findAndReplaceFrame.findNextButton) {
+
+        }
+        else if (e.getSource() == findAndReplaceFrame.replaceNextButton) {
+
+        }
+        else if (e.getSource() == findAndReplaceFrame.replaceAllButton) {
+
+        }
+        else if (e.getSource() == findAndReplaceFrame.findField) {
+            showFoundText(findAndReplaceFrame.findField.getText());
         }
         // "Help Menu" options
         else if (e.getSource() == aboutMenu) {
