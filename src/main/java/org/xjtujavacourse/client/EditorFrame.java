@@ -22,6 +22,9 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
     private JMenu helpMenu;
     private JMenuItem debugMenu, aboutMenu;
 
+    private JMenu editMenu;
+    private JMenuItem findMenu, findAndReplaceMenu;
+
     // Editor container and style tools
     private JTextPane textArea;
     private JPanel toolPanel;
@@ -61,10 +64,20 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         helpMenu.add(debugMenu);
         helpMenu.add(aboutMenu);
 
+        editMenu = new JMenu("Edit");
+        findMenu = new JMenuItem("Find");
+        findMenu.addActionListener(this);
+        findAndReplaceMenu = new JMenuItem("Replace");
+        findAndReplaceMenu.addActionListener(this);
+        editMenu.add(findMenu);
+        editMenu.add(findAndReplaceMenu);
+
         menuBar = new JMenuBar();
         menuBar.add(fileMenu);
+        menuBar.add(editMenu);
         menuBar.add(helpMenu);
         this.setJMenuBar(menuBar);
+
 
         // Setup core UI components
         BorderLayout layout = new BorderLayout();
@@ -186,6 +199,13 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         // "Debug Menu" options
         if (e.getSource() == debugMenu) {
             debugFrame.setVisible(true);
+        }
+        else if (e.getSource() == findMenu) {
+            FindAndReplaceFrame findFrame = new FindAndReplaceFrame();
+            findFrame.setVisible(true);
+        }
+        else if (e.getSource() == findAndReplaceMenu) {
+            FindAndReplaceFrame findAndReplaceFrame = new FindAndReplaceFrame();
         }
         // "Help Menu" options
         else if (e.getSource() == aboutMenu) {
