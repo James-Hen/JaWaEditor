@@ -32,12 +32,10 @@ public class FindAndReplacePanel extends JPanel {
 
         JPanel optionButtonsPanel = new JPanel();
 
-        if (thisFunctionType == FIND) {
-            findNextButton = new JButton("Find Next");
-            findNextButton.addActionListener(parentListener);
-            optionButtonsPanel.add(findNextButton);
-        }
-        else if (thisFunctionType == REPLACE) {
+        findNextButton = new JButton("Find Next");
+        findNextButton.addActionListener(parentListener);
+        optionButtonsPanel.add(findNextButton);
+        if (thisFunctionType == REPLACE) {
             replaceField = new JTextField();
             replaceField.addActionListener(parentListener);
             replaceField.addFocusListener(new JTextFieldHintListener(replaceField, "Replace"));

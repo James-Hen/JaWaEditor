@@ -5,12 +5,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.*;
-import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class EditorFrame extends JFrame implements ActionListener, MouseListener, DocumentListener {
@@ -236,7 +234,7 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
             e.printStackTrace();
         }
         foundTextLocations = new ArrayList<ArrayList<Integer>>();
-        nowIndicateFoundTextArrayIndex = 0;
+        nowIndicateFoundTextArrayIndex = -1;
         nowReplacedIncrement = 0;
         int indFound = 0;
         while ((indFound = text.indexOf(pattern, indFound)) != -1) {
@@ -258,26 +256,29 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
     }
 
     private void showFoundText() {
+        if (nowIndicateFoundTextArrayIndex == -1) {
+            nowIndicateFoundTextArrayIndex = 0;
+        }
         ArrayList<Integer> found = foundTextLocations.get(nowIndicateFoundTextArrayIndex);
         textArea.requestFocusInWindow();
         textArea.select(found.get(0) + nowReplacedIncrement, found.get(1) + nowReplacedIncrement);
     }
 
-    private boolean replaceNextFoundText() {
+    private boolean replaceFoundTextNext() {
         if (foundTextLocations.isEmpty()) {
             return false;
         }
-        ArrayList<Integer> found = foundTextLocations.get(nowIndicateFoundTextArrayIndex);
+        if (nowIndicateFoundTextArrayIndex == -1) {
+            nowIndicateFoundTextArrayIndex = 1;
+        }
+        ArrayList<Integer> found = foundTextLocations.get(nowIndicateFoundTextArrayIndex == 0 ? foundTextLocations.size() - 1 : nowIndicateFoundTextArrayIndex - 1);
         textArea.requestFocusInWindow();
         textArea.select(found.get(0) + nowReplacedIncrement, found.get(1) + nowReplacedIncrement);
         String altText = findAndReplaceFrame.replaceField.getText();
         textArea.replaceSelection(altText);
-        textArea.select(found.get(0) + nowReplacedIncrement, found.get(0) + altText.length() + nowReplacedIncrement);
         nowReplacedIncrement += altText.length() - findAndReplaceFrame.findField.getText().length();
-        nowIndicateFoundTextArrayIndex += 1;
-        if (nowIndicateFoundTextArrayIndex == foundTextLocations.size()) {
-            nowIndicateFoundTextArrayIndex = 0;
-        }
+        showNextFoundText();
+        isLocationsValid = true;
         return true;
     }
 
@@ -323,10 +324,10 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
             if (!isLocationsValid) {
                 documentFindingUpdated();
             }
-            replaceNextFoundText();
+            replaceFoundTextNext();
         }
         else if (e.getSource() == findAndReplaceFrame.replaceAllButton) {
-            while (replaceNextFoundText());
+            while (replaceFoundTextNext());
         }
         // "Help Menu" options
         else if (e.getSource() == aboutMenu) {
