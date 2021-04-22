@@ -205,8 +205,10 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         ArrayList result = new ArrayList();
         int indFound = 0;
         while ((indFound = textArea.getText().indexOf(pattern, indFound)) != -1) {
-            System.err.println(indFound);
-            result.add(new int[]{indFound, pattern.length()});
+            ArrayList<Integer> a = new ArrayList<Integer>();
+            a.add(indFound);
+            a.add(pattern.length());
+            result.add(a);
             indFound += pattern.length();
         }
         return result;
@@ -214,8 +216,8 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
 
     private void showFoundText(String pattern) {
         ArrayList foundStrings = findInText(pattern);
-        documentBackup = nowDocument;// TODO: fuck up deep copy
         for (ArrayList<Integer> found : findInText(pattern)) {
+            System.err.println(found);
             textArea.setSelectionStart(found.get(0));
             textArea.setSelectionEnd(found.get(1));
             textArea.setSelectedTextColor(Color.MAGENTA);
