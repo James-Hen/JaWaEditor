@@ -34,6 +34,7 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
     private JPanel toolPanel;
     private TextStyleCheckbox boldCheckBox, italicCheckBox;
     private ColorComboBox textColorCombo;
+    private SizeComboBox textSizeComboBox;
     private HTMLEditorKit textKit;
 
     private DebugFrame debugFrame;
@@ -125,9 +126,19 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
                         new StyledEditorKit.ForegroundAction("YELLOW", Color.YELLOW)
                 }
         );
+        Action[] size_actions = new Action[30-5];
+        for (int i = 6; i <= 30; i++) {
+            size_actions[i-6] = new StyledEditorKit.FontSizeAction(String.valueOf(i), i);
+        }
+        textSizeComboBox = new SizeComboBox(size_actions);
         toolPanel.add(boldCheckBox);
         toolPanel.add(italicCheckBox);
+        JLabel colorLabel = new JLabel("Color:");
+        toolPanel.add(colorLabel);
         toolPanel.add(textColorCombo);
+        JLabel sizeLabel = new JLabel("Size:");
+        toolPanel.add(sizeLabel);
+        toolPanel.add(textSizeComboBox);
 
         // Setup debug frame
         debugFrame = new DebugFrame(textArea);
@@ -141,6 +152,7 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         }
         boldCheckBox.setSelected(StyleConstants.isBold(attributeSet));
         italicCheckBox.setSelected(StyleConstants.isItalic(attributeSet));
+        textSizeComboBox.setSelectedSize(StyleConstants.getFontSize(attributeSet));
     }
 
     @Override
@@ -160,12 +172,12 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
 
     @Override
     public void mouseEntered(MouseEvent e) {
-        refreshStyleToolStatus();
+        // refreshStyleToolStatus();
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-        refreshStyleToolStatus();
+        // refreshStyleToolStatus();
     }
 
     @Override
