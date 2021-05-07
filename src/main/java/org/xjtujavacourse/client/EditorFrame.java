@@ -311,7 +311,7 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
             this.add(findAndReplaceFrame, BorderLayout.SOUTH);
             this.revalidate();
         }
-        else if (e.getSource() == findAndReplaceMenu) {
+        else if (findAndReplaceFrame != null && e.getSource() == findAndReplaceMenu) {
             if (findAndReplaceFrame != null) {
                 findAndReplaceFrame.setVisible(false);
                 findAndReplaceFrame = null;
@@ -322,23 +322,23 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
             this.revalidate();
         }
         // "Find and Replace Panel" options
-        else if (e.getSource() == findAndReplaceFrame.exitButton) {
+        else if (findAndReplaceFrame != null && e.getSource() == findAndReplaceFrame.exitButton) {
             this.remove(findAndReplaceFrame);
             this.revalidate();
         }
-        else if (e.getSource() == findAndReplaceFrame.findNextButton) {
+        else if (findAndReplaceFrame != null && e.getSource() == findAndReplaceFrame.findNextButton) {
             if (!isLocationsValid) {
                 documentFindingUpdated();
             }
             showNextFoundText();
         }
-        else if (e.getSource() == findAndReplaceFrame.replaceNextButton) {
+        else if (findAndReplaceFrame != null && e.getSource() == findAndReplaceFrame.replaceNextButton) {
             if (!isLocationsValid) {
                 documentFindingUpdated();
             }
             replaceFoundTextNext();
         }
-        else if (e.getSource() == findAndReplaceFrame.replaceAllButton) {
+        else if (findAndReplaceFrame != null && e.getSource() == findAndReplaceFrame.replaceAllButton) {
             while (replaceFoundTextNext());
         }
         // "Help Menu" options
