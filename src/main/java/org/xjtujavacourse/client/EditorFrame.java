@@ -32,7 +32,6 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
 
     // Find and replace utils
     private FindAndReplacePanel findAndReplaceFrame;
-    private Document documentBackup;
     private Document nowDocument;
 
     // Editor container and style tools
