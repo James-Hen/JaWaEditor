@@ -6,6 +6,7 @@ import org.xjtujavacourse.common.JaWaDocument;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
@@ -37,7 +38,7 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
     // Editor container and style tools
     private JTextPane textArea;
     private JPanel toolPanel;
-    private TextStyleCheckbox boldCheckBox, italicCheckBox;
+    private TextStyleCheckbox boldCheckBox, italicCheckBox, underlineCheckBox;
     private ColorComboBox textColorCombo;
     private SizeComboBox textSizeComboBox;
     private HTMLEditorKit textKit;
@@ -58,16 +59,17 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         FileMenuListener fileMenuListener = new FileMenuListener();
         newFileMenu = new JMenuItem("New");
         newFileMenu.addActionListener(fileMenuListener);
-        openRemoteMenu = new JMenuItem("Open Remote");
-        openRemoteMenu.addActionListener(fileMenuListener);
         openFileMenu = new JMenuItem("Open");
         openFileMenu.addActionListener(fileMenuListener);
+        openRemoteMenu = new JMenuItem("Open Remote");
+        openRemoteMenu.addActionListener(fileMenuListener);
         saveFileMenu = new JMenuItem("Save");
         saveFileMenu.addActionListener(fileMenuListener);
+        saveFileMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
         fileMenu.add(newFileMenu);
         fileMenu.add(openFileMenu);
-        fileMenu.add(saveFileMenu);
         fileMenu.add(openRemoteMenu);
+        fileMenu.add(saveFileMenu);
 
         helpMenu = new JMenu("Help");
         debugMenu = new JMenuItem("Debug");
@@ -114,9 +116,11 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         toolPanel = new JPanel();
         this.add(toolPanel, BorderLayout.NORTH);
         boldCheckBox =
-                new TextStyleCheckbox("Bold", false, new StyledEditorKit.BoldAction());
+                new TextStyleCheckbox("<html><b>B </b><html>", false, new StyledEditorKit.BoldAction());
         italicCheckBox =
-                new TextStyleCheckbox("Italic", false, new StyledEditorKit.ItalicAction());
+                new TextStyleCheckbox("<html><i>I </i><html>", false, new StyledEditorKit.ItalicAction());
+        underlineCheckBox
+                = new TextStyleCheckbox("<html><u>U</u> <html>", false, new StyledEditorKit.UnderlineAction());
 
         textColorCombo = new ColorComboBox(
                 new Action[] {
@@ -141,7 +145,8 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         textSizeComboBox = new SizeComboBox(size_actions);
         toolPanel.add(boldCheckBox);
         toolPanel.add(italicCheckBox);
-        JLabel colorLabel = new JLabel("Color:");
+        toolPanel.add(underlineCheckBox);
+        JLabel colorLabel = new JLabel("    Color:");
         toolPanel.add(colorLabel);
         toolPanel.add(textColorCombo);
         JLabel sizeLabel = new JLabel("Size:");
@@ -161,6 +166,12 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         boldCheckBox.setSelected(StyleConstants.isBold(attributeSet));
         italicCheckBox.setSelected(StyleConstants.isItalic(attributeSet));
         textSizeComboBox.setSelectedSize(StyleConstants.getFontSize(attributeSet));
+        if (docName == null || docName.equals("")) {
+            this.setTitle("JaWa Editor - " + "Default Document");
+        }
+        else {
+            this.setTitle("JaWa Editor - " + docName);
+        }
     }
 
     @Override
@@ -212,6 +223,23 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         FileSystemView fsv;
         FileMenuListener() {
             fileChooser = new JFileChooser();
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setFileFilter(new FileFilter() {
+                @Override
+                public boolean accept(File f) {
+                    String fName = f.getName();
+                    int suffixPos = fName.lastIndexOf(".");
+                    if (suffixPos == -1) {
+                        return false;
+                    }
+                    return fName.substring(fName.lastIndexOf(".") + 1).equals("JaWa");
+                }
+
+                @Override
+                public String getDescription() {
+                    return "JaWa Document";
+                }
+            });
             fsv = FileSystemView.getFileSystemView();
             fileChooser.setCurrentDirectory(fsv.getHomeDirectory());
         }
@@ -277,6 +305,8 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
                 int result = fileChooser.showOpenDialog(EditorFrame.this);
                 if (result == JFileChooser.APPROVE_OPTION) {
                     documentFile = fileChooser.getSelectedFile();
+                    docName = documentFile.getName();
+                    refreshStyleToolStatus();
                 } else {
                     return;
                 }
@@ -319,9 +349,11 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
                     }
 
                 } else {
-                    int result = fileChooser.showOpenDialog(EditorFrame.this);
+                    int result = fileChooser.showSaveDialog(EditorFrame.this);
                     if (result == JFileChooser.APPROVE_OPTION) {
                         documentFile = fileChooser.getSelectedFile();
+                        docName = documentFile.getName();
+                        refreshStyleToolStatus();
                     } else {
                         return;
                     }

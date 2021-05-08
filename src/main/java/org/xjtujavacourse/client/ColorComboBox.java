@@ -12,6 +12,16 @@ public class ColorComboBox extends JComboBox<String> implements ItemListener {
     private HashMap<String, Action> colorActionMap;
     private HashMap<String, Color> stringColorMap;
     private HashMap<Color, String> colorStringMap;
+    private static String intToHexValue(int number) {
+        String result = Integer.toHexString(number & 0xff);
+        while (result.length() < 2) {
+            result = "0" + result;
+        }
+        return result.toUpperCase();
+    }
+    private static String colorToHexValue(Color color) {
+        return "#" + intToHexValue(color.getRed()) + intToHexValue(color.getGreen()) + intToHexValue(color.getBlue());
+    }
     ColorComboBox(Action[] actions) {
         super();
         colorActionMap = new HashMap<String, Action>();
@@ -19,8 +29,6 @@ public class ColorComboBox extends JComboBox<String> implements ItemListener {
         colorStringMap = new HashMap<Color, String>();
         for (Action act : actions) {
             String str = act.getValue(Action.NAME).toString();
-            addItem(str);
-            colorActionMap.put(str, act);
             Color actColor;
             try {
                 actColor = (Color)Color.class.getField(str).get(Color.class);
@@ -28,8 +36,11 @@ public class ColorComboBox extends JComboBox<String> implements ItemListener {
                 e.printStackTrace();
                 actColor = Color.BLACK;
             }
-            stringColorMap.put(str, actColor);
-            colorStringMap.put(actColor, str);
+            String showStr = "<html><font color=\"" + colorToHexValue(actColor) + "\">" + str + "<html>";
+            addItem(showStr);
+            colorActionMap.put(showStr, act);
+            stringColorMap.put(showStr, actColor);
+            colorStringMap.put(actColor, showStr);
         }
         addItemListener(this);
     }
