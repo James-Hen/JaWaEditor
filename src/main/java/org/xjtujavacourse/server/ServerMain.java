@@ -59,7 +59,7 @@ public class ServerMain {
                 int len = is.available();
                 byte[] bs = new byte[len];
                 is.read(bs);
-                System.out.println("Good Here." + is.available());
+                System.out.println("Good Here." + len);
                 JaWaDocument doc = null;
                 try {
                     doc = (JaWaDocument) Base64Serializer.convertFromBytes(bs);
@@ -95,20 +95,18 @@ public class ServerMain {
         server.createContext("/download", new HttpHandler() {
             @Override
             public void handle(HttpExchange exchange) throws IOException {
-                String query = exchange.getRequestURI().getQuery();
-                String name;
+                String name = exchange.getRequestURI().getQuery();
 
-                if (query == null || query.length() == 0) {
+                if (name == null || name.length() == 0) {
                     name = "";
-                } else {
-                    name = query.substring(1);
                 }
 
                 if (docsHead.containsKey(name)) {
                     Serializable s = docsHead.get(name);
+                    System.out.println("Check here 0");
                     byte[] bs = Base64Serializer.convertToBytes(s);
-                    exchange.getResponseBody().write(bs);
                     exchange.sendResponseHeaders(200, bs.length);
+                    exchange.getResponseBody().write(bs);
                     exchange.close();
                 } else {
                     sendResponse(exchange, "Error: file name not found", 404);

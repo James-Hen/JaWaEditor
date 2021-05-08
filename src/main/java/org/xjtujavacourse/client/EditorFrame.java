@@ -1,5 +1,8 @@
 package org.xjtujavacourse.client;
 
+import org.xjtujavacourse.common.Base64Serializer;
+import org.xjtujavacourse.common.JaWaDocument;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -8,7 +11,9 @@ import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class EditorFrame extends JFrame implements ActionListener, MouseListener, DocumentListener {
@@ -16,7 +21,8 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
     private JMenuBar menuBar;
 
     private JMenu fileMenu;
-    private JMenuItem newFileMenu, openFileMenu, saveFileMenu, saveAsFileMenu;
+    private boolean isRemote;
+    private JMenuItem newFileMenu, openRemoteMenu, openFileMenu, saveFileMenu;
 
     private JMenu helpMenu;
     private JMenuItem debugMenu, aboutMenu;
@@ -40,6 +46,9 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
     private DebugFrame debugFrame;
 
     private File documentFile;
+    private String serverHost;
+    private int serverPort;
+    private String docName;
 
     EditorFrame() {
         this.setSize(800, 600);
@@ -50,16 +59,16 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         FileMenuListener fileMenuListener = new FileMenuListener();
         newFileMenu = new JMenuItem("New");
         newFileMenu.addActionListener(fileMenuListener);
+        openRemoteMenu = new JMenuItem("Open Remote");
+        openRemoteMenu.addActionListener(fileMenuListener);
         openFileMenu = new JMenuItem("Open");
         openFileMenu.addActionListener(fileMenuListener);
         saveFileMenu = new JMenuItem("Save");
         saveFileMenu.addActionListener(fileMenuListener);
-        saveAsFileMenu = new JMenuItem("Save as");
-        saveAsFileMenu.addActionListener(fileMenuListener);
         fileMenu.add(newFileMenu);
         fileMenu.add(openFileMenu);
         fileMenu.add(saveFileMenu);
-        fileMenu.add(saveAsFileMenu);
+        fileMenu.add(openRemoteMenu);
 
         helpMenu = new JMenu("Help");
         debugMenu = new JMenuItem("Debug");
@@ -209,25 +218,123 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            int result = fileChooser.showOpenDialog(EditorFrame.this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                documentFile = fileChooser.getSelectedFile();
-            }
-            else {
-                return;
-            }
             // "File Menu" options
             if (e.getSource() == newFileMenu) {
+                isRemote = false;
+                textArea.setText("");
+            }
+            else if (e.getSource() == openRemoteMenu) {
+                isRemote = true;
 
+                String s = JOptionPane.showInputDialog(EditorFrame.this, "Remote URL:");
+                URI uri = null;
+                try {
+                    uri = new URI(s);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    return;
+                }
+
+                if (!uri.getScheme().equals("jawa"))
+                    return;
+
+                serverHost = uri.getHost();
+                serverPort = uri.getPort();
+                if (serverPort == -1)
+                    serverPort = 8848;
+                docName = uri.getPath().substring(1);
+
+                System.out.println(serverHost + " " + serverPort + " " + docName);
+
+                try {
+                    URL url = new URL("http://" + serverHost + ":" + serverPort + "/download?" + docName);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setDoInput(true);
+                    conn.connect();
+                    int code = conn.getResponseCode();
+                    System.out.println("Remote open response = " + code);
+                    if (code == 200) {
+                        InputStream in = conn.getInputStream();
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[1024];
+                        int length = 0;
+                        while ((length = in.read(buffer)) != -1) {
+                            baos.write(buffer, 0, length);
+                        }
+                        JaWaDocument doc = (JaWaDocument) Base64Serializer.convertFromBytes(baos.toByteArray());
+                        docName = doc.name;
+                        textArea.setText(doc.content);
+                    } else {
+                        textArea.setText("");
+                    }
+                    conn.disconnect();
+                } catch (IOException | ClassNotFoundException ex) {
+                    ex.printStackTrace();
+                }
             }
             else if (e.getSource() == openFileMenu) {
+                isRemote = false;
+                int result = fileChooser.showOpenDialog(EditorFrame.this);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    documentFile = fileChooser.getSelectedFile();
+                } else {
+                    return;
+                }
 
+                try {
+                    FileInputStream fis = new FileInputStream(documentFile);
+                    byte[] arr = new byte[(int) documentFile.length()];
+                    fis.read(arr);
+                    fis.close();
+                    textArea.setText(new String(arr, StandardCharsets.UTF_8));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
             else if (e.getSource() == saveFileMenu) {
+                // TODO
+                if (isRemote) {
+                    URL url = null;
 
-            }
-            else if (e.getSource() == saveAsFileMenu) {
+                    JaWaDocument doc = new JaWaDocument();
+                    doc.prevVersion = "";
+                    doc.name = docName;
+                    doc.content = textArea.getText();
 
+                    try {
+                        url = new URL("http://" + serverHost + ":" + serverPort + "/upload");
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("POST");
+                        conn.setDoOutput(true);
+                        conn.connect();
+                        OutputStream os = conn.getOutputStream();
+                        os.write(Base64Serializer.convertToBytes(doc));
+                        os.flush();
+                        os.close();
+
+                        System.out.println("Remote save response = " + conn.getResponseCode());
+                        conn.disconnect();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+
+                } else {
+                    int result = fileChooser.showOpenDialog(EditorFrame.this);
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        documentFile = fileChooser.getSelectedFile();
+                    } else {
+                        return;
+                    }
+
+                    try {
+                        FileOutputStream fos = new FileOutputStream(documentFile);
+                        fos.write(textArea.getText().getBytes(StandardCharsets.UTF_8));
+                        fos.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
             }
         }
     }
