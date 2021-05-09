@@ -6,10 +6,13 @@ import org.xjtujavacourse.common.JaWaDocument;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -23,13 +26,13 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
 
     private JMenu fileMenu;
     private boolean isRemote;
-    private JMenuItem newFileMenu, openRemoteMenu, openFileMenu, saveFileMenu;
+    private JMenuItem newFileMenu, openRemoteMenu, openFileMenu, saveFileMenu, saveAsFileMenu;
 
     private JMenu helpMenu;
     private JMenuItem debugMenu, aboutMenu;
 
     private JMenu editMenu;
-    private JMenuItem findMenu, findAndReplaceMenu;
+    private JMenuItem findMenu, findAndReplaceMenu, undoMenu, redoMenu;
 
     // Find and replace utils
     private FindAndReplacePanel findAndReplaceFrame;
@@ -50,6 +53,8 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
     private int serverPort;
     private String docName;
 
+    private UndoManager undoManager;
+
     EditorFrame() {
         this.setSize(800, 600);
         this.setTitle("JaWa Editor");
@@ -66,10 +71,14 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         saveFileMenu = new JMenuItem("Save");
         saveFileMenu.addActionListener(fileMenuListener);
         saveFileMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
+        saveAsFileMenu = new JMenuItem("Save As");
+        saveAsFileMenu.addActionListener(fileMenuListener);
+        saveAsFileMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.SHIFT_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK));
         fileMenu.add(newFileMenu);
         fileMenu.add(openFileMenu);
         fileMenu.add(openRemoteMenu);
         fileMenu.add(saveFileMenu);
+        fileMenu.add(saveAsFileMenu);
 
         helpMenu = new JMenu("Help");
         debugMenu = new JMenuItem("Debug");
@@ -86,8 +95,16 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         findAndReplaceMenu = new JMenuItem("Replace");
         findAndReplaceMenu.addActionListener(this);
         findAndReplaceMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK));
+        undoMenu = new JMenuItem("Undo");
+        undoMenu.addActionListener(this);
+        undoMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_DOWN_MASK));
+        redoMenu = new JMenuItem("Redo");
+        redoMenu.addActionListener(this);
+        redoMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_DOWN_MASK));
         editMenu.add(findMenu);
         editMenu.add(findAndReplaceMenu);
+        editMenu.add(undoMenu);
+        editMenu.add(redoMenu);
         isLocationsValid = false;
 
         menuBar = new JMenuBar();
@@ -110,6 +127,10 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         textArea.setDocument(nowDocument);
         JScrollPane scroll = new JScrollPane(textArea);
         this.add(scroll, BorderLayout.CENTER);
+
+        undoManager = new UndoManager();
+        nowDocument.addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
+
 
         textArea.setContentType("text/html");
 
@@ -243,6 +264,58 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
             fsv = FileSystemView.getFileSystemView();
             fileChooser.setCurrentDirectory(fsv.getHomeDirectory());
         }
+
+        private void saveRemote() {
+            URL url = null;
+
+            JaWaDocument doc = new JaWaDocument();
+            doc.prevVersion = "";
+            doc.name = docName;
+            doc.content = textArea.getText();
+
+            try {
+                url = new URL("http://" + serverHost + ":" + serverPort + "/upload");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.connect();
+                OutputStream os = conn.getOutputStream();
+                os.write(Base64Serializer.convertToBytes(doc));
+                os.flush();
+                os.close();
+
+                System.out.println("Remote save response = " + conn.getResponseCode());
+                conn.disconnect();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        private void saveAsFile() {
+
+            int result = fileChooser.showSaveDialog(EditorFrame.this);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                documentFile = fileChooser.getSelectedFile();
+                docName = documentFile.getName();
+                refreshStyleToolStatus();
+            } else {
+                return;
+            }
+
+            saveFile();
+        }
+
+        private void saveFile() {
+
+            try {
+                FileOutputStream fos = new FileOutputStream(documentFile);
+                fos.write(textArea.getText().getBytes(StandardCharsets.UTF_8));
+                fos.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             // "File Menu" options
@@ -321,50 +394,21 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
                     ex.printStackTrace();
                 }
             }
-            else if (e.getSource() == saveFileMenu) {
+            else if (e.getSource() == saveAsFileMenu) {
                 // TODO
                 if (isRemote) {
-                    URL url = null;
-
-                    JaWaDocument doc = new JaWaDocument();
-                    doc.prevVersion = "";
-                    doc.name = docName;
-                    doc.content = textArea.getText();
-
-                    try {
-                        url = new URL("http://" + serverHost + ":" + serverPort + "/upload");
-                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                        conn.setRequestMethod("POST");
-                        conn.setDoOutput(true);
-                        conn.connect();
-                        OutputStream os = conn.getOutputStream();
-                        os.write(Base64Serializer.convertToBytes(doc));
-                        os.flush();
-                        os.close();
-
-                        System.out.println("Remote save response = " + conn.getResponseCode());
-                        conn.disconnect();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
+                    saveRemote();
 
                 } else {
-                    int result = fileChooser.showSaveDialog(EditorFrame.this);
-                    if (result == JFileChooser.APPROVE_OPTION) {
-                        documentFile = fileChooser.getSelectedFile();
-                        docName = documentFile.getName();
-                        refreshStyleToolStatus();
-                    } else {
-                        return;
-                    }
-
-                    try {
-                        FileOutputStream fos = new FileOutputStream(documentFile);
-                        fos.write(textArea.getText().getBytes(StandardCharsets.UTF_8));
-                        fos.close();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
+                    saveAsFile();
+                }
+            }
+            else if (e.getSource() == saveFileMenu) {
+                if (documentFile != null) {
+                    saveFile();
+                }
+                else {
+                    saveAsFile();
                 }
             }
         }
@@ -458,6 +502,12 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
             findAndReplaceFrame.findField.getDocument().addDocumentListener(this);
             this.add(findAndReplaceFrame, BorderLayout.SOUTH);
             this.revalidate();
+        }
+        else if (e.getSource() == undoMenu && undoManager.canUndo()) {
+            undoManager.undo();
+        }
+        else if (e.getSource() == redoMenu && undoManager.canRedo()) {
+            undoManager.redo();
         }
         // "Find and Replace Panel" options
         else if (findAndReplaceFrame != null && e.getSource() == findAndReplaceFrame.exitButton) {
