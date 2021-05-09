@@ -115,7 +115,7 @@ private void refreshStyleToolStatus() {
     italicCheckBox.setSelected(StyleConstants.isItalic(attributeSet));
     textSizeComboBox.setSelectedSize(StyleConstants.getFontSize(attributeSet));
 }
-```
+``` 
 
 #### 查找与替换
 
