@@ -11,6 +11,8 @@ import javax.swing.event.UndoableEditListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.*;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
@@ -32,7 +34,7 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
     private JMenuItem debugMenu, aboutMenu;
 
     private JMenu editMenu;
-    private JMenuItem findMenu, findAndReplaceMenu, undoMenu, redoMenu;
+    private JMenuItem findMenu, findAndReplaceMenu, undoMenu, redoMenu, insertImageMenu;
 
     // Find and replace utils
     private FindAndReplacePanel findAndReplaceFrame;
@@ -101,10 +103,13 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         redoMenu = new JMenuItem("Redo");
         redoMenu.addActionListener(this);
         redoMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_DOWN_MASK));
+        insertImageMenu = new JMenuItem("Insert Image");
+        insertImageMenu.addActionListener(this);
         editMenu.add(findMenu);
         editMenu.add(findAndReplaceMenu);
         editMenu.add(undoMenu);
         editMenu.add(redoMenu);
+        editMenu.add(insertImageMenu);
         isLocationsValid = false;
 
         menuBar = new JMenuBar();
@@ -508,6 +513,26 @@ public class EditorFrame extends JFrame implements ActionListener, MouseListener
         }
         else if (e.getSource() == redoMenu && undoManager.canRedo()) {
             undoManager.redo();
+        } else if (e.getSource() == insertImageMenu) {
+            JFileChooser fc = new JFileChooser();
+            int returnVal = fc.showOpenDialog(EditorFrame.this);
+
+            if (returnVal != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+
+            String s = (String) JOptionPane.showInputDialog(
+                    EditorFrame.this,
+                    "Image Width");
+            int width = Integer.parseInt(s);
+
+            int pos = textArea.getCaretPosition();
+            String content = "<img width=\""+ width +"\" src=\"file:///" + fc.getSelectedFile().getAbsolutePath() + "\"/>";
+            try {
+                textKit.insertHTML((HTMLDocument) textArea.getDocument(), textArea.getCaretPosition(), content, 0, 0, HTML.Tag.IMG);
+            } catch (BadLocationException | IOException badLocationException) {
+                badLocationException.printStackTrace();
+            }
         }
         // "Find and Replace Panel" options
         else if (findAndReplaceFrame != null && e.getSource() == findAndReplaceFrame.exitButton) {
