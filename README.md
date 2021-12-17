@@ -1,13 +1,13 @@
 # JaWaEditor
 An assignment for the Java programming course held by XJTU.
 
-## Author
+## Contributors
 
-| Name          | ID         | Class           |
-| ------------- | ---------- | --------------- |
-| Junyang Zhang | 2173314309 | 计算机试验班 91 |
-| Chenyang Li   | 2191111178 | 计算机 91 |
-| Yupei Li      | 2195011989 | 计算机试验班 91 |
+| Name          |
+| ------------- |
+| Junyang Zhang |
+| Chenyang Li   |
+| Yupei Li      |
 
 
 ## Enviroment
